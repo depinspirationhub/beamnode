@@ -52,11 +52,16 @@ rm -rf avalanchego-$latest avalanchego-linux-amd64-$latest.tar.gz
 # Setup Beam Subnet-EVM
 mkdir -p ~/subnetevm ~/.avalanchego/plugins ~/.avalanchego/configs
 cd ~/subnetevm
-wget -q https://github.com/ava-labs/subnet-evm/releases/download/v0.7.2/subnet-evm_0.7.2_linux_amd64.tar.gz
-tar -xzf subnet-evm_0.7.2_linux_amd64.tar.gz
+
+# Fetch latest Subnet-EVM release dynamically
+subnetevm_latest=$(curl -s https://api.github.com/repos/ava-labs/subnet-evm/releases/latest | jq -r .tag_name)
+
+# Download and extract Subnet-EVM
+wget -q https://github.com/ava-labs/subnet-evm/releases/download/${subnetevm_latest}/subnet-evm_${subnetevm_latest#v}_linux_amd64.tar.gz
+tar -xzf subnet-evm_${subnetevm_latest#v}_linux_amd64.tar.gz
 mv subnet-evm ~/.avalanchego/plugins/kLPs8zGsTVZ28DhP1VefPCFbCgS7o5bDNez8JUxPVw9E6Ubbz
 
-# Create node.json config
+# Create node.json config (optional but helpful)
 echo '{ "track-subnets": "eYwmVU67LmSfZb1RwqCMhBYkFyG8ftxn6jAwqzFmxC9STBWLC", "partial-sync-primary-network": true }' > ~/.avalanchego/configs/node.json
 
 # Add upgrade.json for Beam chain
@@ -72,7 +77,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=/usr/local/bin/avalanchego
+ExecStart=/usr/local/bin/avalanchego --track-subnets=eYwmVU67LmSfZb1RwqCMhBYkFyG8ftxn6jAwqzFmxC9STBWLC
 Restart=always
 RestartSec=10
 
@@ -84,7 +89,7 @@ EOF
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable beamnode
-sudo systemctl start beamnode
+sudo systemctl restart beamnode
 
 # Wait a bit for node to boot up
 echo ""
